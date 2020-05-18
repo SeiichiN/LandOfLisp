@@ -145,6 +145,12 @@
 ;;
 ;; p117 無向グラフ
 ;;
+;; (
+;;  (LIVING-ROOM (GARDEN WEST DOOR) (ATTIC UPSTAIRS LADDER))
+;;  (GARDEN (LIVING-ROOM EAST DOOR))
+;;  (ATTIC (LIVING-ROOM DOWNSTAIRS LADDER))
+;; )
+;;
 (defun uedges->dot (edges)
   (maplist (lambda (lst)
              (mapc (lambda (edge)
@@ -173,5 +179,20 @@
             (lambda ()
               (ugraph->dot nodes edges))))
 
+;;
+;; 出力例
+;; > (my-print *wizard-edges*)
+;; (GARDEN WEST DOOR) 
+;; (ATTIC UPSTAIRS LADDER) 
+;; (LIVING-ROOM EAST DOOR) 
+;; (LIVING-ROOM DOWNSTAIRS LADDER) 
+;;
+(defun my-print (edges)
+  (maplist (lambda (lst)
+             (mapc (lambda (edge)
+                     (print edge))
+                   (cdar lst)))
+           edges))
 
-;;; 修正時刻： Tue May 19 07:31:24 2020
+
+;;; 修正時刻： Tue May 19 08:38:13 2020
