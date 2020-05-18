@@ -129,6 +129,68 @@
                   'string))
    (fresh-line))
 
+;;;================================================
+;;; 7章 単純なリストの先へ
+;;;
+;; p103 連想リスト
+;;
+(defparameter *drink-order* '((bill . double-espresso)
+                              (lisa . small-drip-coffee)
+                              (john . medium-latte)))
+
+;; p104 木構造のデータの可視化
+;;
+(defparameter *house* '((walls
+                         (mortar
+                          (cement)
+                          (water)
+                          (sand))
+                         (bricks))
+                        (windows
+                         (glass)
+                         (frame)
+                         (curtains))
+                        (roof
+                         (singles)
+                         (chimney))))
+
+;; p105 グラフを可視化する
+;;
+(defparameter *wizard-nodes*
+  '((living-room
+     (you are in the living room.
+      a wizard is snoring loudly on the couch.))
+    (garden
+     (you are in a beautiful garden.
+      there is a well in front of you.))
+    (attic
+     (you are in the attic.
+      there is a giant welding torch in the corner.))))
 
 
-;; 修正時刻： Mon May 18 15:06:21 2020
+(defparameter *wizard-edges*
+  '((living-room
+     (garden west door)
+     (attic upstairs ladder))
+    (garden
+     (living-room east door))
+    (attic
+     (living-room downstairs ladder))))
+
+;;---------------------------------------------
+;; graphviz のインストール
+;;  $ sudo apt install graphviz
+;;
+;; test.dot
+;; 
+;;   digraph {
+;;       a->b;
+;;   }
+;;
+;; neato -Tpng -O test.dot
+;;
+
+
+
+
+;; 修正時刻： Mon May 18 16:59:30 2020
