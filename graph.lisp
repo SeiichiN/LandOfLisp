@@ -190,9 +190,10 @@
 (defun my-print (edges)
   (maplist (lambda (lst)
              (mapc (lambda (edge)
-                     (print edge))
+                     (print (car edge))
+                     (print (cdr lst)))
                    (cdar lst)))
            edges))
 
 
-;;; 修正時刻： Tue May 19 08:38:13 2020
+;;; 修正時刻： Tue May 19 09:42:31 2020
