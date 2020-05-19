@@ -35,4 +35,21 @@
 ;;              collect (edge-pair (random-node)(random-node)))))
 
 
-;;; 修正時刻： Tue May 19 16:38:11 2020
+(defun direct-edges (node edge-list)
+  (remove-if-not (lambda (x)
+                   (eql (car x) node))
+                 edge-list))
+
+(defun get-connected (node edge-list)
+  (let ((visited nil))
+    (labels ((traverse (node)
+               (unless (member node visited)
+                 (push node visited)
+                 (mapc (lambda (edge)
+                         (traverse (cdr edge)))
+                       (direct-edges node edge-list)))))
+      (traverse node))
+    visited))
+
+
+;;; 修正時刻： Tue May 19 20:51:18 2020
