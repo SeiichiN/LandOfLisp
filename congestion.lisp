@@ -95,6 +95,10 @@
 ;; これは 2 という地点からつながっている地点のリストである
 ;;
 
+
+;; get-connected関数を使って全ノードを調べる。
+;; それぞれのノードからつながっているノードのリストを connected に入れて繋がっていないノードのリストを unconnected に入れている。
+;; 
 (defun find-islands (nodes edge-list)
   (let ((islands nil))
     (labels ((find-island (nodes)
@@ -123,4 +127,4 @@
   (loop for n from 1 to *node-num*
        collect n))
 
-;;; 修正時刻： Wed May 20 08:38:48 2020
+;;; 修正時刻： Wed May 20 10:21:15 2020
