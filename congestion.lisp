@@ -55,6 +55,8 @@
 ;;  (22 . 29) (5 . 22) (22 . 5) (4 . 3) (3 . 4) (25 . 24) (24 . 25))
 ;;--------------------------------------------------------------------------
 
+(defparameter *edge-list* (make-edge-list))
+
 
 ;; ある地点からどの地点につながっているかをリストする
 (defun direct-edges (node edge-list)
@@ -111,6 +113,11 @@
       (find-island nodes))
     islands))
 
+;; find-islands の実行例
+;; > (find-islands *node-list* *edge-list*)
+;; ((23)
+;;  (15 9 20 30 4 13 5 22 8 19 18 11 17 21 28 10 16 27 26 2 12 6 3 29 7 24 25 14 1))
+;;
 
 
 (defun connected-with-bridges (islands)
@@ -127,4 +134,6 @@
   (loop for n from 1 to *node-num*
        collect n))
 
-;;; 修正時刻： Wed May 20 10:21:15 2020
+(defparameter *node-list* (make-node-list))
+
+;;; 修正時刻： Wed May 20 12:37:20 2020
