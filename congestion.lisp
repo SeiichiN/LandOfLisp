@@ -207,12 +207,18 @@
 ;;===================================================================
 ;; p132
 ;;
+;; nodes -- (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)
+;; edge-list -- すべての島をブリッジでつないだ edge のリスト。
+;;         僕の作ったグローバル変数では *all-routes* になる。
+;; cops -- ランダムに選択された cops という edge のリスト。検問所のあ
+;; るリスト。
 (defun make-city-edges ()
   (let* ((nodes (loop for i from 1 to *node-num*
                    collect i))
          (edge-list (connect-all-islands nodes (make-edge-list)))
          (cops (remove-if-not (lambda (x)
-                                (zerop (random *cop-odds*)))
+                                (declare (ignore x))           ; <2>
+                                (zerop (random *cop-odds*)))   ; <1>
                               edge-list)))
     (add-cops (edges-to-alist edge-list) cops)))
 
@@ -233,27 +239,76 @@
 ;; ((7 . 13) (3 . 5) (10 . 17) (7 . 8) (25 . 1))
 ;;
 ;; という結果になる。
+;;
+;; <1> のところ。
+;; (random *cop-odds*) で 0...14 の範囲で乱数が生成される。
+;; 0 のとき (zerop (random *cop-odds*)) は T になる。
+;; その場合のみ、(remove-if-not ...) で、その要素は cops に入れられる。
+;; lambda (x) の x には、edge-list の各要素が順に入り、zerop... が T
+;; になった場合のみ、cops にセットされるのである。
+;;
+;; <2> lamda (x) の x は使わない。コンパイラから警告が出るので、
+;;   (declare (ignore x)) で警告を無視するようにコンパイラに伝える。
 
 
-
+;; ある地点から、どの地点につながっているかを alist にする
+;; たとえば 地点13 は、14 と 16 につながっているから
+;; (13 (14) (16)) というリストになる。
 (defun edges-to-alist (edge-list)
   (mapcar (lambda (node1)
             (cons node1
                   (mapcar (lambda (edge)
-                            (list (cdr edge)))
-                          (remove-duplicates (direct-edges node1
+                            (list (cdr edge)))             ; <3>
+                          (remove-duplicates (direct-edges node1 ; <2>
                                                            edge-list)
                                              :test #'equal))))
-          (remove-duplicates (mapcar #'car edge-list))))
+          ;; (22 14 13 12 11 ... 9 29 24 23 18 19 25 28)
+          (remove-duplicates (mapcar #'car edge-list))))   ; <1>
 
+;; <1> edge-list すなわち *all-routes* の car をリストにしたもの
+;;   (22 14 13 12 11 6 3 26 27 17 30 21 10 20 16 15 1 5 7 2 4 8 9
+;;    29 24 23 18 19 25 28)
+;;
+;; <2> -- <1>のそれぞれの node について direct-edge関数を実行
+;;     (direct-edges 22 *all-routes*) -- ((22 . 9))
+;;     (direct-edges 14 *all-routes*) -- ((14 . 13))
+;;     (direct-edges 13 *all-routes*) -- ((13 . 14) (13 . 16))
+;;     remove-duplicates関数で重複要素を削除している。
+;;
+;; 例えば 地点22 から direct-edge で直接つながっている edge は
+;; ((22 . 9)) である。
+;; 同様に 地点14 の場合は ((14 . 13))
+;; 同様に 地点13 の場合は ((13 . 14) (13 . 16)) となる。
+;; <3> -- (22 . 9) なら (9)。(14 . 13) なら (13)。
+;;   (13 . 14) (13 . 16) なら (14) (16) となる。
+;; このとき、node1 は 13 なので、(cons node1 (mapcar ...)) は、
+;; (13 (14) (16)) となる。
+;;
+;; 実行例
+;; > (edges-to-alist *all-routes*)
+;; ((22 (9)) (14 (13)) (13 (14) (16)) (12 (29) (30)) (11 (8)) (6 (24) (7))
+;;  (3 (5) (29) (24)) (26 (18) (27)) (27 (1) (26)) (17 (5) (30))
+;;  (30 (12) (25) (2) (17)) (21 (1) (10) (15) (20)) (10 (21) (15)) (20 (21) (16))
+;;  (16 (13) (20)) (15 (21) (10) (28)) (1 (27) (5) (21) (9))
+;;  (5 (8) (3) (1) (17) (25)) (7 (6) (19) (8)) (2 (30) (4)) (4 (25) (2))
+;;  (8 (5) (18) (11) (7) (29)) (9 (22) (1) (18)) (29 (3) (12) (8) (24))
+;;  (24 (28) (6) (3) (29)) (23 (25)) (18 (8) (26) (9) (19)) (19 (7) (18))
+;;  (25 (4) (30) (5) (23) (28)) (28 (24) (15) (25)))
+
+
+;; edge-alist -- edges-to-alist関数で作成した alist
+;; edges-wigh-cops -- 警官のいる道。
+;;    make-city-edges関数の中で作成。たとえば、
+;;    ((7 . 13) (3 . 5) (10 . 17) (7 . 8) (25 . 1))
+;;    というリストになる。
 (defun add-cops (edge-alist edges-with-cops)
-  (mapcar (lambda (x)
-            (let ((node1 (car x))
-                  (node1-edges (cdr x)))
-              (cons node1
-                    (mapcar (lambda (edge)
-                              (let ((node2 (car edge)))
-                                (if (intersection (edge-pair node1
+  (mapcar (lambda (x)                                     ; <1>
+            (let ((node1 (car x))                         ; <2>
+                  (node1-edges (cdr x)))                  ; <3>
+              (cons node1                                 ; <7>
+                    (mapcar (lambda (edge)                ; <4>
+                              (let ((node2 (car edge)))   ; <5>
+                                (if (intersection (edge-pair node1  ; <6>
                                                              node2)
                                                   edges-with-cops
                                                   :test #'equal)
@@ -262,11 +317,71 @@
                             node1-edges))))
           edge-alist))
 
+;; <1> -- x が仮に (13 (14) (16)) だとする。
+;; <2> -- node1 は 13 になる。
+;; <3> -- node1-edges は ((14) (16)) となる。
+;; <4> -- edge には (14)、(16) と順に入る。
+;; <5> -- node2 は、たとえば 14 になる。
+;; <6> -- node1 が 13、node2 が 14 なら (13 . 14) とうペアが作成され、
+;;     警官のいる edge-list の中にそのペアがあるかとうかを
+;; intersection関数を使って調べ、もしあれば (14 cops) を、なければ
+;; (14) を mapcar の返り値として返す。
+;; それを <7> で (13 14 cops) という形にする。
+;; すなわち、(cons 13 '(14 cops)) -> (13 14 cops) となる。
+
+;;----------------------------------------------------------------
+;; (make-city-edges) の実行例
+;; > (make-city-edges)
+;; ((23 (22)) (2 (15)) (21 (14)) (29 (11)) (24 (11) (28 COPS) (15))
+;;  (22 (23) (18) (10) (12 COPS)) (26 (17) (20) (18)) (15 (2) (24) (30))
+;;  (19 (10) (20)) (11 (24) (29) (13 COPS)) (13 (1) (11 COPS)) (3 (12) (8 COPS))
+;;  (18 (16) (22) (26) (1)) (1 (9) (12) (13) (18)) (14 (21) (8) (6))
+;;  (6 (8 COPS) (14)) (12 (27 COPS) (1) (22 COPS) (3) (25)) (25 (4) (20) (12))
+;;  (5 (4) (27) (7)) (9 (1) (8)) (28 (24 COPS) (20)) (20 (26) (19) (25) (28))
+;;  (17 (26) (7)) (7 (5) (17)) (4 (5) (25) (30)) (30 (15) (16) (4))
+;;  (27 (10) (12 COPS) (5) (8 COPS)) (8 (6 COPS) (14) (3 COPS) (9) (27 COPS))
+;;  (10 (27) (19) (22) (16)) (16 (18) (30) (10)))
+;;----------------------------------------------------------------
+
+
+;; p135
+
+;; 隣の地点のリストを返す関数
+;; node -- ある地点。たとえば 19
+;; edge-alist -- *all-city-edges*
+;;
+(defun neighbors (node edge-alist)
+  (mapcar #'car (cdr (assoc node edge-alist))))
+
+;; > (neighbors 19 *all-city-edges*)
+;; (21 13 20)
+
+;; > (assoc 19 *all-city-edges*)
+;; (19 (21 COPS) (13) (20))
+
+;; a と b の距離が 1 であるかどうかを調べる関数
+;; 1であれば b を含むリストが返る。
+;; 1でなければ nil が返る。
+(defun within-one (a b edge-alist)
+  (member b (neighbors a edge-alist)))
+
+;; CL-USER> (within-one 19 21 *all-city-edges*)
+;; (21 13 20)
+
+;; a と b の距離が2以下であるかを調べる関数
+;; 2以下であれば、そのリストが返る
+;; そうでなければ nil が返る
+(defun within-two (a b edge-alist)
+  (or (within-one a b edge-alist)
+      (some (lambda (x)
+              (within-one x b edge-alist))
+            (neighbors a edge-alist))))
+
 
 
 ;;;===================================================================
 ;;; 今までの関数を動かしてみる。
-;;;
+;;; テスト用のグローバル変数
 
 (defparameter *edge-list* (make-edge-list))
 
@@ -281,4 +396,40 @@
 
 (defparameter *all-routes* (append (connect-with-bridges *islands*) *edge-list*))
 
-;;; 修正時刻： Thu May 21 08:41:05 2020
+;; copsも含めた全ての道を作成する
+(defparameter *all-city-edges* (make-city-edges))
+;; *ALL-CITY-EDGES*
+;;
+;; CL-USER> *all-city-edges*
+;; ((23 (4)) (4 (23) (15)) (24 (27)) (27 (24) (11)) (5 (25))
+;;  (21 (11) (17) (19 COPS)) (26 (20)) (28 (9)) (17 (21) (9) (6)) (29 (7) (11))
+;;  (30 (13) (3) (1)) (10 (14) (18) (16)) (1 (18) (30) (20)) (12 (9))
+;;  (19 (21 COPS) (13) (20)) (9 (13) (17) (8 COPS) (28) (25) (12) (14)) (2 (25))
+;;  (25 (5) (14 COPS) (9) (8) (2)) (22 (20) (7)) (15 (4) (18))
+;;  (13 (30) (9) (19) (6)) (6 (17) (13)) (3 (30) (11)) (16 (11) (10) (8 COPS))
+;;  (14 (10) (25 COPS) (9) (7)) (7 (29) (22) (14)) (18 (1) (10) (15) (8))
+;;  (8 (9 COPS) (25) (16 COPS) (18) (11)) (20 (26) (1) (19) (22) (11))
+;;  (11 (16) (27) (21) (29) (3) (8) (20)))
+;;
+;; 12 を起点とする道
+;; CL-USER> (assoc 12 *all-city-edges*)
+;; (12 (9))
+;;
+;; 19 を起点とする道
+;; CL-USER> (assoc 19 *all-city-edges*)
+;; (19 (21 COPS) (13) (20))
+;;
+;; 19 を起点として、目的地はどうなるか？
+;; CL-USER> (cdr (assoc 19 *all-city-edges*))
+;; ((21 COPS) (13) (20))
+;;
+;; 19 を起点として 21 を目的地とすると、その道に警官はいるか？
+;; CL-USER> (cdr (assoc 21 (cdr (assoc 19 *all-city-edges*))))
+;; (COPS)
+;;
+;; 22 が目的地ならどうか？
+;; CL-USER> (cdr (assoc 20 (cdr (assoc 19 *all-city-edges*))))
+;; NIL
+
+
+;;; 修正時刻： Fri May 22 11:39:09 2020
