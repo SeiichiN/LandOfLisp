@@ -207,6 +207,10 @@
 ;;===================================================================
 ;; p132
 ;;
+;; make-city-edges
+;; 全ての道を作成する
+;; cops がどこにいるかも情報として入っている。
+;;
 ;; nodes -- (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)
 ;; edge-list -- すべての島をブリッジでつないだ edge のリスト。
 ;;         僕の作ったグローバル変数では *all-routes* になる。
@@ -378,6 +382,45 @@
             (neighbors a edge-alist))))
 
 
+;;
+;; *worm-num* -- 3。突厥ぼたるの数
+;; random-node -- 1...30の間でランダムな数を生成
+;;
+(defun make-city-nodes (edge-alist)
+  (let ((wumpus (random-node))
+        (glow-worms (loop for i below *worm-num*
+                       collect (random-node))))
+    (loop for n from 1 to *node-num*
+       collect (append (list n)
+                       (cond ((eql n wumpus) '(wumpus))
+                             ((within-two n wumpus edge-alist)
+                              '(blood!)))
+                       (cond ((member n glow-worms)
+                              '(glow-worm))
+                             ((some (lambda (worm)
+                                      (within-one n worm edge-alist))
+                                    glow-worms)
+                              '(lights!)))
+                       (when (some #'cdr (cdr (assoc n edge-alist)))
+                         '(sirens!))))))
+
+;; wumpus -- 1...30のうちのどれかになる。
+;; ggow-worms -- 1...30のうちの3つの数。
+;; loopの処理 -- 1...30まで順に次の処理をおこなう。
+;;     リストを作成。 (1 A B C)
+;;       A -- もし n が wumpus と同じなら '(wumpus) になる。
+;;            そうでなければ、n と wumpus の距離が 2以下であれば、'(blood!) になる。
+;;       B -- もし n が glow-worms に含まれているならば、'(glow-worm) になる。
+;;            そうでなければ、n と 3つのglow-wormsのどれか一つ以上との距離が
+;;            1以下であれば '(lights!) になる。
+;;       C -- (some #'cdr (cdr (assoc n edge-alist))) -- copsがあるかどうかを
+;;            調べて、もしあれば、'(sirens!) になる。
+;; 
+
+
+
+
+
 
 ;;;===================================================================
 ;;; 今までの関数を動かしてみる。
@@ -431,5 +474,19 @@
 ;; CL-USER> (cdr (assoc 20 (cdr (assoc 19 *all-city-edges*))))
 ;; NIL
 
+;; 地図の完成
+(defparameter *all-comp-nodes* *all-city-edges*)
+;;
+;; ((25 (12)) (30 (8)) (5 (17 COPS) (29)) (9 (14) (10)) (4 (8) (16))
+;;  (16 (10) (23) (21 COPS) (4)) (29 (5) (14)) (19 (2)) (15 (1)) (13 (27))
+;;  (1 (15) (22)) (3 (10 COPS) (7) (11)) (14 (9) (29) (11) (21))
+;;  (8 (4) (30) (24) (21)) (21 (11) (16 COPS) (14) (8)) (6 (23) (10) (24) (18))
+;;  (26 (24) (17 COPS)) (17 (5 COPS) (26 COPS)) (28 (10) (22) (12)) (12 (25) (28))
+;;  (27 (13) (10)) (10 (28) (16) (3 COPS) (9) (24) (6) (27)) (7 (3) (11))
+;;  (11 (21) (18 COPS) (14) (3) (7)) (18 (11 COPS) (6) (23))
+;;  (22 (24) (28) (1) (2 COPS)) (20 (23)) (23 (6) (16) (2) (18) (20))
+;;  (24 (10) (8) (22) (26) (6) (2)) (2 (19) (23) (22 COPS) (24)))
 
-;;; 修正時刻： Fri May 22 11:39:09 2020
+
+
+;;; 修正時刻： Sat May 23 08:40:03 2020
