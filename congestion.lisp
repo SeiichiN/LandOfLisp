@@ -418,6 +418,15 @@
 ;;            調べて、もしあれば、'(sirens!) になる。
 ;; 
 
+;; 完全な地図を描く関数
+;; あとに new-game という関数を定義しているので、この名前にしておいた。
+(defun new-game-comp ()
+  (setf *congestion-city-edges* (make-city-edges))
+  (setf *congestion-city-nodes* (make-city-nodes *congestion-city-edges*))
+  (setf *player-pos* (find-empty-node))
+  (setf *visited-nodes* (list *player-pos*))
+  (draw-city))
+
 (defun find-empty-node ()
   (let ((x (random-node)))
     (if (cdr (assoc x *congestion-city-nodes*))
@@ -427,13 +436,117 @@
 (defun draw-city ()
   (ugraph->png "city" *congestion-city-nodes* *congestion-city-edges*))
 
+;; p139 既知のノード
+(defun known-city-nodes ()
+  (mapcar
+   ;; そのnodeが *visited-node* なら
+   ;; そのnodeについての詳しい情報を n に入れる
+   ;; また、プレイヤーの場所なら * をつける
+   ;; *visited-node* でなければ ? をつける
+   (lambda (node)
+     (if (member node *visited-nodes*)
+         (let ((n (assoc node *congestion-city-nodes*)))
+           (if (eql node *player-pos*)
+               (append n '(*))
+               n))
+         (list node '?)))
+   (remove-duplicates
+    (append *visited-nodes*
+            ;; リスト*visited-nodes* のそれぞれが
+            ;; どのnodeにつながっているかをリストにする
+            (mapcan (lambda (node)
+                      (mapcar #'car
+                              (cdr (assoc node
+                                          *congestion-city-edges*))))
+                    *visited-nodes*)))))
+
+
+;; p139
+;; まだ訪れていない道にいる警官のサイレンの情報を取り除いたエッジの
+;; alist
+(defun known-city-edges ()
+  (mapcar (lambda (node)
+            (cons node
+                  (mapcar (lambda (x)
+                            (if (member (car x) *visited-nodes*)
+                                x
+                                (list (car x))))
+                          ;; node からつながっている道のリスト
+                          (cdr (assoc node
+                                      *congestion-city-edges*)))))
+          *visited-nodes*))
+
+
+;; 既知のノードとエッジだけを含むグラフを描く
+(defun draw-known-city ()
+  (ugraph->png "known-city" (known-city-nodes) (known-city-edges)))
+
+
+;; 新しくゲームを開始する
 (defun new-game ()
   (setf *congestion-city-edges* (make-city-edges))
   (setf *congestion-city-nodes* (make-city-nodes *congestion-city-edges*))
   (setf *player-pos* (find-empty-node))
   (setf *visited-nodes* (list *player-pos*))
-  (draw-city))
+  (draw-known-city))
 
+
+;; 街を歩き回る
+(defun walk (pos)
+  (handle-direction pos nil))
+
+;; ワンプスの場所に攻撃をかける
+(defun charge (pos)
+  (handle-direction pos t))
+
+;; pos -- 次に行きたい地点
+;; charging -- 攻撃をしかけるかどうか (t / nil)
+(defun handle-direction (pos charging)
+  ;; posがリストに存在すればその pos が返るのでそれが edge になる
+  ;; なければ nil が返るので、それが edge になる
+  (let ((edge (assoc pos
+                     ;; 今いる地点の次の地点のリストを得る
+                     ;; ((27) (12) (14))
+                     (cdr (assoc *player-pos*
+                                 *congestion-city-edges*)))))
+    ;; edge が nil でなければ
+    (if edge
+        ;; handle-new-place を実行
+        (handle-new-place edge pos charging)
+        ;; nil ならば表示
+        (princ "That location does not exist!"))))
+
+
+;; プレイヤーが新しい場所に移動したときに呼ばれる関数
+;; edge -- 次に行ける地点
+;; pos -- 次に行きたい地点
+;; charging -- 攻撃するかどうか t / nil
+(defun handle-new-place (edge pos charging)
+  ;; node -- 次に行きたい地点の情報
+  (let* ((node (assoc pos *congestion-city-nodes*))
+         ;; そのnodeが 'glow-worm を含んでいて
+         ;; しかも まだ訪れていない地点なら
+         ;; has-worm は t となる。
+         (has-worm (and (member 'glow-worm node)
+                        (not (member pos *visited-nodes*)))))
+    ;; posが *visited-nodes* に無ければ追加する
+    (pushnew pos *visited-nodes*)
+    ;; 現在の地点を pos とする
+    (setf *player-pos* pos)
+    (draw-known-city)
+    (cond ((member 'cops edge)
+           (princ "You ran into the cops. Game Over."))
+          ((member 'wumpus node)
+           (if charging
+               (princ "You found the Wumpus!")
+               (princ "You ran into the Wumpus.")))
+          ;; node に 'wumpus がいないのに charging したら wasted
+          (charging (princ "You wasted your last bullet. Game Over."))
+          (has-worm
+           (let ((new-pos (random-node)))
+             (princ "You ran into a Glow Worm Gang! You're now at ")
+             (princ new-pos)
+             (handle-new-place nil new-pos nil))))))
 
 
 ;;;===================================================================
@@ -489,7 +602,7 @@
 ;; NIL
 
 ;; 地図の完成
-(defparameter *all-comp-nodes* (make-city-nodes *all-city-edges*))
+(defparameter *all-ciry-nodes* (make-city-nodes *all-city-edges*))
 ;;
 ;; ((1 BLOOD! SIRENS!) (2 LIGHTS!) (3) (4) (5 GLOW-WORM) (6 SIRENS!) (7 SIRENS!)
 ;;  (8 SIRENS!) (9) (10) (11 LIGHTS!) (12 LIGHTS!) (13) (14 LIGHTS!) (15)
@@ -499,4 +612,4 @@
 
 
 
-;;; 修正時刻： Sat May 23 12:35:40 2020
+;;; 修正時刻： Sun May 24 10:02:20 2020
