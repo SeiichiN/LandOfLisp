@@ -1,4 +1,4 @@
-;;; congestion.lisp
+;;; generic.lisp <-- congestion.lisp
 ;;; p127
 ;;;
 
@@ -97,6 +97,9 @@
 ;;
 
 
+
+
+
 ;; get-connected関数を使って全ノードを調べる。
 ;; それぞれのノードからつながっているノードのリストを connected に入れて
 ;; 繋がっていないノードのリストを unconnected に入れている。
@@ -112,6 +115,7 @@
                    (find-island unconnected)))))                   ; <4>
       (find-island nodes))
     islands))
+
 
 ;; find-islands の実行例
 ;; > (find-islands *node-list* *edge-list*)
@@ -222,7 +226,7 @@
                    collect i))
          (edge-list (connect-all-islands nodes (make-edge-list)))
          (cops (remove-if-not (lambda (x)
-;                                (declare (ignore x))           ; <2>
+                                (declare (ignore x))           ; <2>
                                 (zerop (random *cop-odds*)))   ; <1>
                               edge-list)))
     (add-cops (edges-to-alist edge-list) cops)))
@@ -549,6 +553,9 @@
              (handle-new-place nil new-pos nil))))))
 
 
+
+
+
 ;;;===================================================================
 ;;; 今までの関数を動かしてみる。
 ;;; テスト用のグローバル変数
@@ -610,6 +617,86 @@
 ;;  (22 GLOW-WORM) (23 BLOOD! SIRENS!) (24) (25 LIGHTS! SIRENS!) (26 LIGHTS!)
 ;;  (27 WUMPUS SIRENS!) (28) (29 GLOW-WORM) (30 SIRENS!))
 
+;;====================================================================
+;;====================================================================
+
+;; p156
+;; edge-list -- ((7 . 18) (18 . 7) (5 . 7) (7 . 5) ... (13 . 26) (26 . 13))
+;; @return: tab --
+;; #S(HASH-TABLE :TEST FASTHASH-EQL (21 . (13)) (19 . (11)) (1 . (5)) (24 . (9))
+;;    (27 . (12 26)) (6 . (4)) (17 . (16 20 26 5)) (23 . (20 26))
+;;    (3 . (22 11 15 2)) (18 . (16)) (16 . (17 10 18)) (9 . (24 14))
+;;    (11 . (3 19 29 13 29 12 4)) (4 . (14 6 11)) (12 . (27 28 11 5))
+;;    (15 . (14 3 26)) (14 . (15 4 9 5)) (10 . (16 28)) (30 . (2)) (2 . (3 28 30))
+;;    (28 . (12 5 22 2 10 25)) (13 . (21 11 25)) (5 . (1 28 17 12 14 26))
+;;    (26 . (27 17 23 15 5)) (22 . (3 28 29)) (29 . (11 11 22))
+;;    (25 . (20 28 13 20)) (20 . (17 23 25 25)))
+;;
+(defun hash-edges (edge-list)
+  (let ((tab (make-hash-table)))
+    (mapc (lambda (x)
+            (let ((node (car x)))
+              (push (cdr x) (gethash node tab))))
+          edge-list)
+    tab))
+
+(defparameter *edge-tab* (hash-edges (make-edge-list)))
+;; #S(HASH-TABLE :TEST FASTHASH-EQL (9 . (21)) (22 . (24 17)) (8 . (11 14 28))
+;;    (14 . (8 26)) (7 . (25 15 13)) (27 . (3 29)) (23 . (3 2)) (17 . (22 1))
+;;    (28 . (10 8 29)) (2 . (13 3 23 1)) (15 . (7 10 12)) (11 . (8 12))
+;;    (18 . (3 4 1)) (19 . (1)) (1 . (17 26 2 20 18 19)) (6 . (13 29))
+;;    (29 . (30 27 28 6)) (30 . (29 5 3)) (3 . (18 21 5 23 27 2 30))
+;;    (13 . (2 5 6 7 21)) (24 . (22 4)) (4 . (18 24)) (20 . (1 10))
+;;    (10 . (28 25 15 20)) (25 . (7 10 21)) (21 . (9 26 3 13 25))
+;;    (5 . (13 30 3 12)) (12 . (15 11 5 26)) (26 . (21 14 1 12)))
 
 
-;;; 修正時刻： Mon May 25 06:46:24 2020
+
+
+(defun get-connected-hash (node edge-tab)
+  (let ((visited (make-hash-table)))
+    (labels ((traverse (node)
+               (unless (gethash node visited)
+                 (setf (gethash node visited) t)
+                 (mapc (lambda (edge)
+                         (traverse edge))
+                       (gethash node edge-tab)))))
+      (traverse node))
+    visited))
+
+
+(defstruct person
+  name
+  age
+  waist-size
+  favorite-color)
+
+(defparameter *bob* (make-person :name "Bob"
+                                 :age 35
+                                 :waist-size 32
+                                 :favorite-color "blue"))
+
+;; > *bob*
+;; #S(PERSON :NAME "Bob" :AGE 35 :WAIST-SIZE 32 :FAVORITE-COLOR "blue")
+
+;; > (person-age *bob*)
+;; 35
+
+;; > (setf (person-age *bob*) 36)
+;; 36
+;; > (person-age *bob*)
+;; 36
+
+
+(defun make-person* (name age waist-size favorite-color)
+  (list name age waist-size favorite-color))
+
+
+(defun person-age* (person)
+  (cadr person))
+
+
+
+
+
+;;; 修正時刻： Mon May 25 11:06:08 2020
