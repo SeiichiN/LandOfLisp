@@ -696,7 +696,38 @@
   (cadr person))
 
 
+;;===========================================================
+;; p162
+;;
+(defparameter ans
+  (reduce (lambda (best item)
+            (print "best:")
+            (princ best)
+            (princ " item:")
+            (princ item)
+            (if (and (evenp item) (> item best))
+                item
+                best))
+          '(7 4 6 5 2)
+          :initial-value 0))
+
+;; p163
+(defun sum (lst)
+  (reduce #'+ lst))
+
+
+;; p164
+(defparameter ans2
+  (map 'string
+       (lambda (x)
+         (if (eq x #\s)
+             #\S
+             x))
+       "this is a string"))
 
 
 
-;;; 修正時刻： Mon May 25 11:06:08 2020
+
+
+
+;;; 修正時刻： Wed May 27 08:06:00 2020
