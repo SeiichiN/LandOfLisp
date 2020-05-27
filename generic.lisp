@@ -726,8 +726,13 @@
        "this is a string"))
 
 
+(defun add (a b)
+  (cond ((and (numberp a) (numberp b)) (+ a b))
+        ((and (listp a) (listp b)) (append a b))))
 
+(defmethod add* ((a number) (b number))
+  (+ a b))
 
-
-
-;;; 修正時刻： Wed May 27 08:06:00 2020
+(defmethod add* ((a list) (b list))
+  (append a b))
+;;; 修正時刻： Wed May 27 13:28:07 2020
