@@ -60,6 +60,29 @@
 ;; (6 8 3 7 7 2 10 8)
 
 
+(defun move (animal)
+  (let ((dir (animal-dir animal))
+        ;; xスロットの値をxとする
+        (x (animal-x animal))
+        ;; yスロットの値をyとする
+        (y (animal-y animal)))
+    ;; xスロットの値を次の式で更新する
+    (setf (animal-x animal) (mod (+ x
+                                    (cond ((and (>= dir 2) (< dir 5)) 1)
+                                          ((or (= dir 1) (= dir 5)) 0)
+                                          (t -1)))
+                                 *width*))
+    ;; yスロットの値を次の式で更新する
+    (setf (animal-y animal) (mod (+ y
+                                    (cond ((and (>= dir 0) (< dir 3)) -1)
+                                          ((and (>= dir 4) (< dir 7)) 1)
+                                          (t 0)))
+                                 *height*))
+    ;; animal-energyを一つ減らす
+    (decf (animal-energy animal))))
+
+
+
 ;; 動物の向きを変える
 (defun turn (animal)
   ;; animal-gens の各値を合計して、それを引数にして random する
@@ -92,4 +115,4 @@
 
 
 
-;; 修正時刻： Mon Jun  1 08:33:48 2020
+;; 修正時刻： Mon Jun  1 08:39:43 2020
