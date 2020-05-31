@@ -56,7 +56,27 @@
                      :genes (loop repeat 8
                                collecting (1+ (random 10))))))
 
+(defun move (animal)
+  (let ((dir (animal-dir animal))
+        ;; xスロットの値をxとする
+        (x (animal-x animal))
+        ;; yスロットの値をyとする
+        (y (animal-y animal)))
+    ;; xスロットの値を次の式で更新する
+    (setf (animal-x animal) (mod (+ x
+                                    (cond ((and (>= dir 2) (< dir 5)) 1)
+                                          ((or (= dir 1) (= dir 5)) 0)
+                                          (t -1)))
+                                 *width*))
+    ;; yスロットの値を次の式で更新する
+    (setf (animal-y animal) (mod (+ y
+                                    (cond ((and (>= dir 0) (< dir 3)) -1)
+                                          ((and (>= dir 4) (< dir 7)) 1)
+                                          (t 0)))
+                                 *height*))
+    ;; animal-energyを一つ減らす
+    (decf (animal-energy animal))))
 
 
 
-;; 修正時刻： Sun May 31 11:23:24 2020
+;; 修正時刻： Sun May 31 14:24:35 2020
