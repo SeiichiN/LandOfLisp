@@ -55,8 +55,41 @@
                      :dir   0
                      :genes (loop repeat 8
                                collecting (1+ (random 10))))))
+;;
+;; (loop repeat 8 collecting (1+ (random 10))) の例
+;; (6 8 3 7 7 2 10 8)
+
+
+;; 動物の向きを変える
+(defun turn (animal)
+  ;; animal-gens の各値を合計して、それを引数にして random する
+  (let ((x (random (apply #'+ (animal-genes animal)))))
+    ;; angleを定義。引数は genes と x。
+    (labels ((angle (genes x)
+               ;; genes を先頭から順にみていき、x との差を xnu とする
+               (let ((xnu (- x (car genes))))
+                 ;; もし xnu がマイナスなら
+                 (if (< xnu 0)
+                     0
+                     ;; そうでなければ 引数を変えて angle を実行
+                     ;; そのときに 1 を加える。つまり、genes を
+                     ;; cdr する度に 1が加算される。そして、
+                     ;; (< xnu 0) がマイナスになったときに加算
+                     ;; された値が「重み」となる。
+                     (1+ (angle (cdr genes) xnu))))))
+      (setf (animal-dir animal)
+            (mod (+ (animal-dir animal) (angle (animal-genes animal)
+                                               x))
+                 8)))))
+
+;; 動物に食べさせる
+(defun eat (animal)
+  (let ((pos (cons (animal-x animal) (animal-y animal))))
+    (when (gethash pos *plants*)
+      (incf (animal-energy animal) *plant-energy*)
+      (remhash pos *plants*))))
 
 
 
 
-;; 修正時刻： Sun May 31 11:23:24 2020
+;; 修正時刻： Mon Jun  1 08:33:48 2020
