@@ -106,6 +106,8 @@
                  8)))))
 
 ;; 動物に食べさせる
+;; 植物を食べると80ポイント energy がアップする
+;; そしてその pos は *plants* から削除される
 (defun eat (animal)
   (let ((pos (cons (animal-x animal) (animal-y animal))))
     (when (gethash pos *plants*)
@@ -113,6 +115,21 @@
       (remhash pos *plants*))))
 
 
+;; 無性生殖
+(defparameter *reproduction-energy* 200)
+
+(defun reproduce (animal)
+  (let ((e (animal-energy animal)))
+    (when (>= e *reproduction-energy*)
+      (setf (animal-energy animal) (ash e -1))
+      (let ((animal-nu (copy-structure animal))
+            (genes (copy-list (animal-genes animal)))
+            (mutation (random 8)))
+        (setf (nth mutation genes) (max 1 (+ (nth mutation genes)
+                                             (random 3) -1)))
+        (setf (animal-genes animal-nu) genes)
+        (push animal-nu *animals*)))))
 
 
-;; 修正時刻： Mon Jun  1 08:39:43 2020
+
+;; 修正時刻： Mon Jun  1 13:25:04 2020
