@@ -130,12 +130,36 @@
             (genes (copy-list (animal-genes animal)))
             ;; random 8 を mutation(突然変異)とする
             (mutation (random 8)))
-        ;; genes の mutation番目を 
+        ;; genes の mutation番目を
+        ;; (max 1 (+ (nth mutation genes) (random 3) -1))
+        ;; で置き換える
+        ;; しかし (max 1 (+ (nth mutation genes) (random 3) -1)) の
+        ;; 式はいったいどこからでてきたのだ？
         (setf (nth mutation genes) (max 1 (+ (nth mutation genes)
                                              (random 3) -1)))
+        ;; animal-nu の中の animal-genes を 新しく作った genes で
+        ;; 置き換える
         (setf (animal-genes animal-nu) genes)
+        ;; 新しく作りかえた animal-nu を *animals* に入れる
         (push animal-nu *animals*)))))
 
 
 
-;; 修正時刻： Mon Jun  1 13:40:14 2020
+(defparameter *this-animal* (car *animals*))
+
+
+;; p204
+;; copy-structure の恐ろしい例
+(defparameter *parent* (make-animal :x 0
+                                    :y 0
+                                    :energy 0
+                                    :dir 0
+                                    :genes (list 1 1 1 1 1 1 1 1)))
+
+(defparameter *child* (copy-structure *parent*))
+
+(setf (nth 2 (animal-genes *parent*)) 10)
+;; *parent* を変更すると *child* も変更されてしまっている。
+
+;; 修正時刻： Tue Jun  2 08:33:20 2020
+
