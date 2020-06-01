@@ -120,11 +120,17 @@
 
 (defun reproduce (animal)
   (let ((e (animal-energy animal)))
+    ;; animal-energy が *reproduction-energy* よりも大きければ
     (when (>= e *reproduction-energy*)
+      ;; animal-energy を半分にする
       (setf (animal-energy animal) (ash e -1))
+      ;; animal をコピーして animal-nu とする
       (let ((animal-nu (copy-structure animal))
+            ;; animal-genes をコピーして genes とする
             (genes (copy-list (animal-genes animal)))
+            ;; random 8 を mutation(突然変異)とする
             (mutation (random 8)))
+        ;; genes の mutation番目を 
         (setf (nth mutation genes) (max 1 (+ (nth mutation genes)
                                              (random 3) -1)))
         (setf (animal-genes animal-nu) genes)
@@ -132,4 +138,4 @@
 
 
 
-;; 修正時刻： Mon Jun  1 13:25:04 2020
+;; 修正時刻： Mon Jun  1 13:40:14 2020
