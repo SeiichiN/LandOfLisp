@@ -4,7 +4,7 @@
 (defparameter *width* 100)
 (defparameter *height* 30)
 (defparameter *jungle* '(45 10 10 10))
-(defparameter *plant-energy* 80)
+(defparameter *plant-energy* 10)
 
 ;; :test に equal を指定している。この場合、英大小文字を区別する。
 (defparameter *plants* (make-hash-table :test #'equal))
@@ -51,7 +51,7 @@
 (defparameter *animals*
   (list (make-animal :x    (ash *width* -1)
                      :y    (ash *height* -1)
-                     :energy 1000
+                     :energy 50
                      :dir   0
                      :genes (loop repeat 8
                                collecting (1+ (random 10))))))
@@ -186,6 +186,7 @@
 ;; 世界を描く
 ;;
 (defun draw-world ()
+  (printnum)
   (loop for y
      below *height*
      do (progn (fresh-line)
@@ -200,6 +201,13 @@
                                   ((gethash (cons x y) *plants*) #\*)
                                   (t #\space))))
                (princ "|"))))
+
+(defun printnum ()
+  (loop for x
+     below *width*
+     do (princ (if (= (mod x 10) 0)
+                   #\T
+                   #\space))))
 
 ;;
 ;; ユーザーインターフェースをつくる
@@ -220,5 +228,6 @@
                (evolution))))))
 
 
-;; 修正時刻： Tue Jun  2 19:34:47 2020
+;; 修正時刻： Wed Jun  3 08:26:58 2020
+
 
