@@ -133,10 +133,14 @@
         ;; genes の mutation番目を
         ;; (max 1 (+ (nth mutation genes) (random 3) -1))
         ;; で置き換える
-        ;; しかし (max 1 (+ (nth mutation genes) (random 3) -1)) の
-        ;; 式はいったいどこからでてきたのだ？
+        ;; (+ (nth mutation genes) (random 3) -1) これはつまり
+        ;; (+ (nth mutation genes) -1) あるいは
+        ;; (+ (nth mutation genes)  0) あるいは
+        ;; (+ (nth mutation genes)  1) である。
+        ;; そして、max 1 によって、最低 1 であることは保証される。
         (setf (nth mutation genes) (max 1 (+ (nth mutation genes)
-                                             (random 3) -1)))
+                                             (random 3)
+                                             -1)))
         ;; animal-nu の中の animal-genes を 新しく作った genes で
         ;; 置き換える
         (setf (animal-genes animal-nu) genes)
@@ -148,18 +152,73 @@
 (defparameter *this-animal* (car *animals*))
 
 
-;; p204
-;; copy-structure の恐ろしい例
-(defparameter *parent* (make-animal :x 0
-                                    :y 0
-                                    :energy 0
-                                    :dir 0
-                                    :genes (list 1 1 1 1 1 1 1 1)))
+;; ;; p204
+;; ;; copy-structure の恐ろしい例
+;; (defparameter *parent* (make-animal :x 0
+;;                                     :y 0
+;;                                     :energy 0
+;;                                     :dir 0
+;;                                     :genes (list 1 1 1 1 1 1 1 1)))
 
-(defparameter *child* (copy-structure *parent*))
+;; (defparameter *child* (copy-structure *parent*))
 
-(setf (nth 2 (animal-genes *parent*)) 10)
-;; *parent* を変更すると *child* も変更されてしまっている。
+;; (setf (nth 2 (animal-genes *parent*)) 10)
+;; ;; *parent* を変更すると *child* も変更されてしまっている。
 
-;; 修正時刻： Tue Jun  2 08:33:20 2020
+;; =============================================================
+;; 世界の一日
+;;
+(defun update-world ()
+  ;; *animals* を作成するが、energeスロットが 0以下の場合は除く。
+  (setf *animals* (remove-if (lambda (animal)
+                               (<= (animal-energy animal) 0))
+                             *animals*))
+  (mapc (lambda (animal)
+          (turn animal)
+          (move animal)
+          (eat animal)
+          (reproduce animal))
+        *animals*)
+  (add-plants))
+
+
+;; p206
+;; 世界を描く
+;;
+(defun draw-world ()
+  (loop for y
+     below *height*
+     do (progn (fresh-line)
+               (princ "|")
+               (loop for x
+                  below *width*
+                  do (princ (cond ((some (lambda (animal)
+                                           (and (= (animal-x animal) x)
+                                                (= (animal-y animal) y)))
+                                         *animals*)
+                                   #\M)
+                                  ((gethash (cons x y) *plants*) #\*)
+                                  (t #\space))))
+               (princ "|"))))
+
+;;
+;; ユーザーインターフェースをつくる
+;;
+(defun evolution ()
+  (draw-world)
+  (fresh-line)
+  (let ((str (read-line)))
+    (cond ((equal str "quit") ())
+          (t (let ((x (parse-integer str :junk-allowed t)))
+               (if x
+                   (loop for i
+                      below x
+                      do (update-world)
+                      if (zerop (mod i 1000))
+                      do (princ #\.))
+                   (update-world))
+               (evolution))))))
+
+
+;; 修正時刻： Tue Jun  2 19:34:47 2020
 
