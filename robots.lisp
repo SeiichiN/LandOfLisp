@@ -27,21 +27,31 @@
              ;; monsters の中に mpos が複数あれば
              collect (if (> (count mpos monsters) 1)
                          mpos
+                         ;; (sort LIST '< :key #'car) --
+                         ;;   LIST -- ((40 . 896) (55 . 912)...) とす
+                         ;;   ると、40 55 をキーとしてソートすることに
+                         ;;   なる。つまり、pleyerとmonsterの間の距離,
+                         ;;   xとyを足した値の昇順でソートされる。
+                         ;;   つまり、pleyerとの距離の近いもの順。
                          (cdar (sort (loop for (k . d) in directions
                                         ;; monsters も player と同じ
                                         ;; 方向に動く
                                         for new-mpos = (+ mpos d)
                                         ;; monsterの位置とplayerの位置のX座標の差と
                                         ;; y座標の差の和
+                                        ;; (40 . 896) という cons ができる
                                         collect (cons (+ (abs (- (mod new-mpos 64)
                                                                  (mod pos 64)))
                                                          ;; (ash n -6) -- 64分の1
-                                                         ;; つまり、64がいくつあるかがわかる
+                                                         ;; つまり、64がいくつあ
+                                                         ;; るかがわかる
                                                          (abs (- (ash new-mpos -6)
                                                                  (ash pos -6))))
                                                       new-mpos))
                                      '<
                                      :key #'car))))
+     ;; monsters の mposをひとつひとつ調べて、全ての mpos が複数あれば
+     ;; pleyerの勝ち。
      when (loop for mpos in monsters
              always (> (count mpos monsters) 1))
      return 'player-wins
@@ -66,4 +76,4 @@
 
 
 
-;; 修正時刻： Wed Jun 10 20:53:11 2020
+;; 修正時刻： Thu Jun 11 08:24:48 2020
