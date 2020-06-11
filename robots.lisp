@@ -56,6 +56,7 @@
              always (> (count mpos monsters) 1))
      return 'player-wins
      ;; ここが robots のメインループ
+     ;; |~%|~,65:; -- 1行の文字数が65を超えていたら改行 (p227)
      do (format t
                 "~%|~{~<|~%|~,65:;~A~>~}|"
                 (loop for p
@@ -77,4 +78,4 @@
 
 
 
-;; 修正時刻： Thu Jun 11 09:50:03 2020
+;; 修正時刻： Fri Jun 12 06:27:01 2020
