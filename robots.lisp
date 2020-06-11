@@ -55,6 +55,7 @@
      when (loop for mpos in monsters
              always (> (count mpos monsters) 1))
      return 'player-wins
+     ;; ここが robots のメインループ
      do (format t
                 "~%|~{~<|~%|~,65:;~A~>~}|"
                 (loop for p
@@ -76,4 +77,4 @@
 
 
 
-;; 修正時刻： Thu Jun 11 08:24:48 2020
+;; 修正時刻： Thu Jun 11 09:50:03 2020
