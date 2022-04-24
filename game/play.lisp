@@ -189,11 +189,10 @@
                                 (t hex)))))
 
 
-;; board-attack のテスト
-(setq test-board #((0 3) (0 3) (1 3) (1 1)))
 
 ;;;
 ;;; 補給:
+;;; 各マスには最大1つしか補給できない 
 ;;;
 ;; board -- #((0 1) (1 3) (0 2) (1 1))
 ;; player -- 0 / 1
@@ -228,7 +227,6 @@
     (board-array (f (coerce board 'list) spare-dice))))
 
 
-(setq test-board #((0 1) (1 1) (0 2) (1 1)))
 
 (defun play-vs-humen (tree)
   (print-info tree)
@@ -242,7 +240,6 @@
   (format t "current-player = ~a" (player-letter (car tree)))
   (draw-board (cadr tree)))
 
-(setq test-tree (game-tree test-board 0 2 t))
 
 (defun handle-human (tree)
   (fresh-line)
@@ -321,8 +318,13 @@
 ;; (defparameter *board-hexnum* (* *board-size* *board-size*))
 
 
+;; board-attack のテスト
+(setq test-board #((0 3) (0 3) (1 3) (1 1)))
+
+;; (setq test-board #((0 1) (1 1) (0 2) (1 1)))
+
+;; (setq test-tree (game-tree test-board 0 2 t))
 
 
 
-
-;; 修正時刻: Sun 2022/04/24 09:38:32
+;; 修正時刻: Mon 2022/04/25 06:27:57
